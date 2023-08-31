@@ -1,0 +1,2 @@
+#nx 	dx(nm)		t_steps		anchura		lambda(nm)	inicioD		finD		dielectrico
+1000	10		1000		50		780		8000		8500		1.0
