@@ -21,22 +21,22 @@ if(una):
         x_test [i ,2]= xt[i ,5]*c
         x_test [i ,3]= xt[i ,7]*c
 
-    for i in range (0, yt. shape [0]) : #estas son las soluciones que debería obtener la red (los datos del output) y con los que va a comparar los resultados
+    for i in range (0, yt. shape [0]) :
         y_test [i ,0]= yt[i ,1]
         y_test [i ,1]= yt[i ,3]*c
 
-    predicciones = model.predict( x_test ) #en el TFG de  Blanca dice que las iteraciones es la evolución temporal del cambio del campo en un mismo punto.               Efectivamente, se puede ver que es así al observar que los outputs son iguales que los inputs en la posición x, solo que con una iteración de retraso
-    xFig =xt [: , 0] #las posiciones de x no van a cambiar y no hay que predecirlas
+    predicciones = model.predict( x_test )
+    xFig =xt [: , 0]
     fig ,ax=p. subplots ()
-    ax. plot (xFig , y_test [: ,0] , label ='Datos ') #aquí dibuja los datos reales del campo eléctrico
-    ax. plot (xFig , predicciones [: ,0] , label ='Prediccion ', linestyle ='dashed') #y aquí dibuja los predichos por la red
+    ax. plot (xFig , y_test [: ,0] , label ='Datos ')
+    ax. plot (xFig , predicciones [: ,0] , label ='Prediccion ', linestyle ='dashed')
     ax. set_xlabel ('Iteracion ')
     ax. set_ylabel ('Amplitud de campo ')
     ax. set_title (" Campo electrico (normalizado)")
     ax. legend ()
     fig.savefig ('Campo E(real).jpg', dpi =300)
     fig1 , ax1=p. subplots ()
-    ax1 . plot (xFig , y_test [: ,1] , label ='Datos ') #y aquí hace lo mismo con el campo magnético
+    ax1 . plot (xFig , y_test [: ,1] , label ='Datos ')
     ax1 . plot (xFig , predicciones [: ,1] , label ='Prediccion ', linestyle ='dashed')
     ax1 . set_xlabel ('Iteracion ')
     ax1 . set_ylabel ('Amplitud de campo ')
@@ -72,17 +72,17 @@ if(dos):
 
     predicciones_E = model_E.predict( x_test_E )
     predicciones_B = model_B.predict( x_test_B )
-    xFig =xt [: , 0] #las posiciones de x no van a cambiar y no hay que predecirlas
+    xFig =xt [: , 0]
     fig ,ax=p. subplots ()
-    ax. plot (xFig , y_test_E [: ,0] , label ='Datos ') #aquí dibuja los datos reales del campo eléctrico
-    ax. plot (xFig , predicciones_E [: ,0] , label ='Prediccion ', linestyle ='dashed') #y aquí dibuja los predichos por la red
+    ax. plot (xFig , y_test_E [: ,0] , label ='Datos ')
+    ax. plot (xFig , predicciones_E [: ,0] , label ='Prediccion ', linestyle ='dashed')
     ax. set_xlabel ('Iteracion ')
     ax. set_ylabel ('Amplitud de campo ')
     ax. set_title (" Campo electrico (normalizado)")
     ax. legend ()
     fig.savefig ('Campo E(real).jpg', dpi =300)
     fig1 , ax1=p. subplots ()
-    ax1 . plot (xFig , y_test_B [: ,0] , label ='Datos ') #y aquí hace lo mismo con el campo magnético
+    ax1 . plot (xFig , y_test_B [: ,0] , label ='Datos ')
     ax1 . plot (xFig , predicciones_B [: ,0] , label ='Prediccion ', linestyle ='dashed')
     ax1 . set_xlabel ('Iteracion ')
     ax1 . set_ylabel ('Amplitud de campo ')

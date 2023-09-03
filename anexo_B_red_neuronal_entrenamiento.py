@@ -7,11 +7,12 @@ Created on Fri Aug 20 10:24:06 2021
 
 import numpy as np
 import pandas as pd
-from tensorflow.keras import models
+from tensorflow.keras import models, regularizers
 from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+from tensorflow.keras.layers import Dense, Dropout, BatchNormalization
+from tensorflow.keras.activations import relu, sigmoid, tanh, selu
 #from tensorflow.keras.optimizers.legacy import SGD
-from tensorflow.keras.optimizers.experimental import SGD
+from tensorflow.keras.optimizers.experimental import SGD, RMSprop, Adam, Adagrad, Adadelta
 import traceback
 
 
@@ -112,7 +113,7 @@ y = y_aux[shuffle_list,:]
 
 ##################################################################################################
 
-una = False
+una = False #modificamos la red original por las dos redes separadas
 dos = not(una)
 
 if (una):
@@ -146,11 +147,10 @@ if (una):
     momentum=0.0
 
     loss='mean_squared_error'
-    model=Sequential() #al poner el inputshape dentro de la primera, estoy creando ya la capa de input con ese tamaño. Con dos lineas tengo 3 capas, una oculta
+    model=Sequential()
     model.add(Dense(2, activation=None,use_bias=False,input_shape=(neurons_in,)))
     model.add(Dense(neurons_out, activation=None,use_bias=False))
-    model.summary() #al no haber activación, estamos haciendo una transformación lineal
-    #esta red tiene 3 capas: una de entrada, una oculta y una de salida. Al escribir el modelo solo aparecen 2 porque son las que tienen asociados pesos y bias, ya     que la de entrada no tiene activación y solo depende por tanto de los datos que le introducimos. En este caso, al poner use_bias=False, las dos últimas capas       solo tendrán pesos, por eso me da error al intentar calcular más cosas de las que hay en las matrices de abajo con get_weights[].
+    model.summary()
 
     neuronas=model.layers[0].units
 
@@ -170,7 +170,7 @@ if (una):
 
     pesos_1 = pd.DataFrame(model.get_weights()[0])
     pesos_2 = pd.DataFrame(model.get_weights()[1])
-    #aqui me salían errores porque estaba intentando calcular los bias cuando no hay, ya que tenemos puesto que use_bias, y yo estaba intentando acceder a              componentes de la matriz que no existían. Por tanto, dejo solo calculados los pesos y dejo en tachado los bias por si algún día los utilizamos
+
 
     # ADDED SGR (15/03/2023)
     #try:
@@ -225,82 +225,126 @@ if (dos):
 
     neurons_in=3
     neurons_out=1
-    epochs=5 #10
+    epochs=20
     mini_batch_size=64
     eta=1.0
     momentum=0.0
-
     loss='mean_squared_error'
-    model_E=Sequential()
-    #model_E.add(Dense(2, activation='tanh',use_bias=False,input_shape=(neurons_in,)))
-	model_E.add(Dense(2, activation=None,use_bias=False,input_shape=(neurons_in,)))
-    model_E.add(Dense(neurons_out, activation=None,use_bias=False))
-    model_E.summary()
+
+    original = 1 #decidimos si usamos las redes lineales o si queremos crear otras diferentes
     
-    model_B=Sequential()
-    #model_B.add(Dense(2, activation='tanh',use_bias=False,input_shape=(neurons_in,)))
-	model_B.add(Dense(2, activation=None,use_bias=False,input_shape=(neurons_in,)))
-    model_B.add(Dense(neurons_out, activation=None,use_bias=False))
-    model_B.summary()
-
-    neuronas_E=model_E.layers[0].units
-    neuronas_B=model_E.layers[0].units
-
-    optimizer_E = SGD(learning_rate=eta, weight_decay=1e-6, momentum=momentum, nesterov=True)
-    optimizer_B = SGD(learning_rate=eta, weight_decay=1e-6, momentum=momentum, nesterov=True)
-    #optimizer='RMSprop'
-    model_E.compile(optimizer=optimizer_E,loss=loss,metrics=['mse'])
-    model_B.compile(optimizer=optimizer_B,loss=loss,metrics=['mse'])
-
-    history_E=model_E.fit(x_E_train,y_E_train,epochs=epochs,batch_size=mini_batch_size,validation_data=(x_E_val,y_E_val))
-    history_B=model_B.fit(x_B_train,y_B_train,epochs=epochs,batch_size=mini_batch_size,validation_data=(x_B_val,y_B_val))
-
-    #models.save_model(model_E,'modelo_E tanh.h5',save_format='h5')
-    #models.save_model(model_B,'modelo_B tanh.h5',save_format='h5')   
-	models.save_model(model_E,'modelo_E.h5',save_format='h5')
-    models.save_model(model_B,'modelo_B.h5',save_format='h5')   
-
-    # history from training
-    print("Keys:",history_E.history.keys())
-    plot_keys_E=list(history_E.history.keys())
-    print("Keys:",history_B.history.keys())
-    plot_keys_B=list(history_B.history.keys())
-    plot_score("./",history_E,loss_name=plot_keys_E[0],metrics_name=plot_keys_E[1]) #SGR(24/11/22) new function
-    plot_score("./",history_B,loss_name=plot_keys_B[0],metrics_name=plot_keys_B[1])
-
-    pesos_1_E = pd.DataFrame(model_E.get_weights()[0])
-    pesos_2_E = pd.DataFrame(model_E.get_weights()[1])
-    pesos_1_B = pd.DataFrame(model_B.get_weights()[0])
-    pesos_2_B = pd.DataFrame(model_B.get_weights()[1])
+    if (original):
+        model_E=Sequential()
+        model_E.add(Dense(2, activation=None,use_bias=False,input_shape=(neurons_in,)))
+        model_E.add(Dense(neurons_out, activation=None,use_bias=False)) 
+        model_E.summary()
     
-    # ADDED SGR (15/03/2023)
-    #try:
-        #bias_1 = pd.DataFrame(model.get_weights()[1])
-        #bias_2 = pd.DataFrame(model.get_weights()[3])
-    #except Exception:
-        #traceback.print_exc()
+        model_B=Sequential()
+        model_B.add(Dense(2, activation=None,use_bias=False,input_shape=(neurons_in,)))
+        model_B.add(Dense(neurons_out, activation=None,use_bias=False))
+        model_B.summary()
 
-    pesos_1_E.to_string('./pesos_in-1_E.txt', header=False, index=False)
-    pesos_2_E.to_string('./pesos_2-out_E.txt', header=False, index=False)
-    pesos_1_B.to_string('./pesos_in-1_B.txt', header=False, index=False)
-    pesos_2_B.to_string('./pesos_2-out_B.txt', header=False, index=False)
-
-    # ADDED SGR (15/03/2023)
-    #try:
-        #bias_1.to_string('./bias_1.txt', header=False, index=False)
-        #bias_2.to_string('./bias_2.txt', header=False, index=False)
-    #except Exception:
-        #traceback.print_exc()
-
-    with open('./mse_vs_neurons_train_E.txt','a') as f:
-        print(model_E.evaluate(x_E_train,y_E_train)[0],'\t',neuronas_E,'\t',epochs,file=f)
-    with open('./mse_vs_neurons_train_B.txt','a') as g:
-        print(model_B.evaluate(x_B_train,y_B_train)[0],'\t',neuronas_B,'\t',epochs,file=g)
+        neuronas_E=model_E.layers[0].units
+        neuronas_B=model_E.layers[0].units
         
+        #optimizer_E = SGD(learning_rate=eta, weight_decay=1e-6, momentum=momentum, nesterov=True)
+        #optimizer_B = SGD(learning_rate=eta, weight_decay=1e-6, momentum=momentum, nesterov=True)
+        optimizer_E = Adagrad(learning_rate=eta, weight_decay=1e-6)
+        optimizer_B = Adagrad(learning_rate=eta, weight_decay=1e-6)
+        model_E.compile(optimizer=optimizer_E,loss=loss,metrics=['mse'])
+        model_B.compile(optimizer=optimizer_B,loss=loss,metrics=['mse'])
 
+        history_E=model_E.fit(x_E_train,y_E_train,epochs=epochs,batch_size=mini_batch_size,validation_data=(x_E_val,y_E_val))
+        history_B=model_B.fit(x_B_train,y_B_train,epochs=epochs,batch_size=mini_batch_size,validation_data=(x_B_val,y_B_val))
+
+        models.save_model(model_E,'modelo_E.h5',save_format='h5')
+        models.save_model(model_B,'modelo_B.h5',save_format='h5')   
+
+        # history from training
+        print("Keys:",history_E.history.keys())
+        plot_keys_E=list(history_E.history.keys())
+        print("Keys:",history_B.history.keys())
+        plot_keys_B=list(history_B.history.keys())
+        plot_score("./",history_E,loss_name=plot_keys_E[0],metrics_name=plot_keys_E[1]) #SGR(24/11/22) new function
+        plot_score("./",history_B,loss_name=plot_keys_B[0],metrics_name=plot_keys_B[1])
+
+        pesos_1_E = pd.DataFrame(model_E.get_weights()[0])
+        pesos_2_E = pd.DataFrame(model_E.get_weights()[1])
+        pesos_1_B = pd.DataFrame(model_B.get_weights()[0])
+        pesos_2_B = pd.DataFrame(model_B.get_weights()[1])
     
+        # ADDED SGR (15/03/2023)
+        #try:
+            #bias_1 = pd.DataFrame(model.get_weights()[1])
+            #bias_2 = pd.DataFrame(model.get_weights()[3])
+        #except Exception:
+            #traceback.print_exc()
     
+        pesos_1_E.to_string('./pesos_in-1_E.txt', header=False, index=False)
+        pesos_2_E.to_string('./pesos_2-out_E.txt', header=False, index=False)
+        pesos_1_B.to_string('./pesos_in-1_B.txt', header=False, index=False)
+        pesos_2_B.to_string('./pesos_2-out_B.txt', header=False, index=False)
     
+        # ADDED SGR (15/03/2023)
+        #try:
+            #bias_1.to_string('./bias_1.txt', header=False, index=False)
+            #bias_2.to_string('./bias_2.txt', header=False, index=False)
+        #except Exception:
+            #traceback.print_exc()
     
+        with open('./mse_vs_neurons_train_E.txt','a') as f:
+            print(model_E.evaluate(x_E_train,y_E_train)[0],'\t',neuronas_E,'\t',epochs,file=f)
+        with open('./mse_vs_neurons_train_B.txt','a') as g:
+            print(model_B.evaluate(x_B_train,y_B_train)[0],'\t',neuronas_B,'\t',epochs,file=g)
+        
+    else: #aqui creariamos las redes no lineales de la forma que queramos probar (ambas deben ser iguales)
+        model_new_E = Sequential()
+        model_new_E.add(Dense(32, activation=None, input_shape=(neurons_in,)))
+        #model_new_E.add(Dropout(0.2))
+        #model_new_E.add(BatchNormalization())
+
+        #model_new_E.add(Dense(32, activation='selu'))
+        #model_new_E.add(Dropout(0.1))
+        #model_new_E.add(BatchNormalization())
+        
+        #model_new_E.add(Dense(64, activation=None))
+        #model_new_E.add(Dropout(0.1))
+        #model_new_E.add(BatchNormalization())
+
+        model_new_E.add(Dense(neurons_out, activation=None))
+        model_new_E.summary()
     
+        model_new_B = Sequential()
+        model_new_B.add(Dense(32, activation=None, input_shape=(neurons_in,)))
+        #model_new_B.add(Dropout(0.2))
+        #model_new_B.add(BatchNormalization())
+
+        #model_new_B.add(Dense(32, activation='selu'))
+        #model_new_B.add(Dropout(0.1))
+        #model_new_B.add(BatchNormalization())
+
+        #model_new_B.add(Dense(64, activation=None))
+        #model_new_B.add(Dropout(0.1))
+        #model_new_B.add(BatchNormalization())
+
+        model_new_B.add(Dense(neurons_out, activation=None))
+        model_new_B.summary()
     
+        optimizer_new_E = Adagrad(learning_rate=eta, weight_decay=1e-6)
+        optimizer_new_B = Adagrad(learning_rate=eta, weight_decay=1e-6)
+        model_new_E.compile(optimizer=optimizer_new_E,loss=loss,metrics=['mse'])
+        model_new_B.compile(optimizer=optimizer_new_B,loss=loss,metrics=['mse'])
+
+        history_new_E=model_new_E.fit(x_E_train,y_E_train,epochs=epochs,batch_size=mini_batch_size,validation_data=(x_E_val,y_E_val))
+        history_new_B=model_new_B.fit(x_B_train,y_B_train,epochs=epochs,batch_size=mini_batch_size,validation_data=(x_B_val,y_B_val))
+
+        models.save_model(model_new_E,'modelo_E.h5',save_format='h5')
+        models.save_model(model_new_B,'modelo_B.h5',save_format='h5')  
+    
+        # history from training
+        print("Keys:",history_new_E.history.keys())
+        plot_keys_new_E=list(history_new_E.history.keys())
+        print("Keys:",history_new_B.history.keys())
+        plot_keys_new_B=list(history_new_B.history.keys())
+        plot_score("./",history_new_E,loss_name=plot_keys_new_E[0],metrics_name=plot_keys_new_E[1]) #SGR(24/11/22) new function
+        plot_score("./",history_new_B,loss_name=plot_keys_new_B[0],metrics_name=plot_keys_new_B[1])

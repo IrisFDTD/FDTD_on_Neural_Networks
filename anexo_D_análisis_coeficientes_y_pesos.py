@@ -32,11 +32,9 @@ if (una):
 
     model=models.load_model('modelo_real.h5')
 
-    w1=model.layers[0].kernel #pesos de la capa oculta, la de entrada no tiene
-    w2=model.layers[1].kernel #pesos de la capa de salida
-    #w3=model.layers[2].kernel
+    w1=model.layers[0].kernel
+    w2=model.layers[1].kernel
     resultados=w1@w2
-    #resultados=w1@w2@w3
 
     def printMatrix(matrix):
         for fila in matrix:
@@ -46,24 +44,14 @@ if (una):
 
     w1=w1.numpy()
     w2=w2.numpy()
-    #w3=w3.numpy()
     resultados=resultados.numpy()
 
-    #print('Red w1 = ')
-    #printMatrix(w1)
-    #print('Red w2 = ')
-    #printMatrix(w2)
-    #print('Red w3 = ')
-    #printMatrix(w3)
     print('Red w1·w2 = ')
     printMatrix(resultados)
-    #print('Algoritmo FDTD=')
-    #printMatrix(algoritmo)
     print('Algoritmo FDTD (normalizado)=')
     printMatrix(algoritmo_c)
     
     w=pd.DataFrame(data=(w1,w2,resultados,algoritmo,algoritmo_c),index=('Red w1','Red w2','Red w1·w2','Algoritmo FDTD','Algoritmo FDTD (normalizado)'))
-    #w=pd.DataFrame(data=(w1,algoritmo_c),index=('Red w1', 'Algoritmo FDTD (norm.)'))
     w.to_string('FDTDvsRed.txt',header=False,justify='justify')
     
 if (dos):
@@ -93,14 +81,10 @@ if (dos):
                 print(elemento,end='\t')
             print('\n')
 
-    w1_E=w1_E.numpy()
-    w2_E=w2_E.numpy()
     resultados_E=resultados_E.numpy()
-    w1_B=w1_B.numpy()
-    w2_B=w2_B.numpy()
     resultados_B=resultados_B.numpy()
 
-    print('Red w1·w2 (E) = ') #los resultados salen un poquito mejor que antes
+    print('Red w1·w2 (E) = ')
     printMatrix(resultados_E)
     print('Algoritmo FDTD E (normalizado)=')
     printMatrix(algoritmo_E)
@@ -108,6 +92,3 @@ if (dos):
     printMatrix(resultados_B)
     print('Algoritmo FDTD B (normalizado)=')
     printMatrix(algoritmo_B)
-    
-    #w=pd.DataFrame(data=(resultados_E,algoritmo_E,resultados_B,algoritmo_B),index=('Red E','Algoritmo E','Red B', 'Algoritmo B'))
-    #w.to_string('FDTDvsRed_EB.txt',header=False,justify='justify')
